@@ -152,7 +152,7 @@ func (bot *Bot) handleHelpCommand(chatID int64) bool {
 }
 
 func (bot *Bot) handleCheckCommand(message *tgbotapi.Message) bool {
-	num := strings.TrimSpace(message.CommandArguments())
+	num := extractNumber(strings.TrimSpace(message.CommandArguments()))
 
 	if num == "" {
 		num = bot.userNums[message.Chat.ID]
@@ -170,12 +170,9 @@ func (bot *Bot) handleCheckCommand(message *tgbotapi.Message) bool {
 }
 
 func (bot *Bot) handleMatch(chatID int64, msg string) bool {
-	r := regexp.MustCompile(`\b(\d{4})\s*(\d{5})\s*(\d{5})\s*(\d{5})\b`)
+	num := extractNumber(msg)
 
-	matches := r.FindStringSubmatch(msg)
-
-	if matches != nil {
-		num := strings.Join(matches[1:], "")
+	if num != "" {
 		bot.userNums[chatID] = num
 
 		go bot.answerToNum(chatID, num)
@@ -208,4 +205,16 @@ func fetchAnswer(num string) string {
 		card.PAN, time.Now().Format("02.01.2006"),
 		float32(card.Sum)/100,
 		card.EndDate)
+}
+
+func extractNumber(message string) string {
+	r := regexp.MustCompile(`\b(\d{4})\s*(\d{5})\s*(\d{5})\s*(\d{5})\b`)
+
+	matches := r.FindStringSubmatch(message)
+
+	if matches != nil {
+		return strings.Join(matches[1:], "")
+	}
+
+	return ""
 }
